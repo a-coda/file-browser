@@ -31,6 +31,9 @@ class FileBrowser(App):
         ("q", "quit", "Quit"),
     ]
 
+    column_names = ["Name", "Size", "Modified"]
+    sort_column = "Name"
+    sort_reverse = False
     show_tree = var(True)
     path: reactive[str | None] = reactive(None)
 
@@ -50,7 +53,7 @@ class FileBrowser(App):
 
     def on_mount(self) -> None:
         self.query_one(DirectoryOnlyTree).focus()
-        self.query_one(DataTable).add_columns("Name", "Size", "Modified")
+        self.query_one(DataTable).add_columns(*self.column_names)
         def theme_change(_signal) -> None:
             """Force the syntax to use a different theme."""
             self.watch_path(self.path)
@@ -64,6 +67,16 @@ class FileBrowser(App):
         event.stop()
         self.path = str(event.path)
 
+    def on_data_table_header_selected(self, event: DataTable.HeaderSelected):
+        if self.sort_column == event.column_key:
+            self.sort_reverse = not self.sort_reverse
+        else:
+            self.sort_reverse = False
+            self.sort_column = event.column_key
+        event.data_table.sort(self.sort_column,
+                              key = parse_human_readable_byte_count_si if event.column_index == self.column_names.index("Size") else lambda x: x,
+                              reverse = self.sort_reverse)
+
     def watch_path(self, path: str | None) -> None:
         """Called when path changes."""
         data_view = self.query_one("#data", DataTable)
@@ -74,7 +87,7 @@ class FileBrowser(App):
             data_view.clear()
             data_view.add_rows([[item.name, human_readable_byte_count_si(item.stat().st_size), datetime.datetime.fromtimestamp(item.stat().st_mtime)] for item in os.scandir(path)])
         except Exception as e:
-            data_view.add_rows([[e, 0, 0]])
+            data_view.add_rows([[e, "", ""]])
 
     def action_toggle_tree(self) -> None:
         """Called in response to key binding."""
@@ -98,6 +111,10 @@ def human_readable_byte_count_si(n):
     
     return "%.1f %sB" % (n / 1000.0, prefixes[p])
 
+def parse_human_readable_byte_count_si(n):
+    prefixes = "BkMGTPE"
+    number, units = n.split()
+    return float(number) * pow(1000, prefixes.index(units[0]))
 
 if __name__ == "__main__":
     FileBrowser().run()
