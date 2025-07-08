@@ -19,7 +19,7 @@ from rich.traceback import Traceback
 from textual.app import App, ComposeResult
 from textual.containers import Container, VerticalScroll
 from textual.reactive import reactive, var
-from textual.widgets import DirectoryTree, Footer, Header, DataTable, Log
+from textual.widgets import DirectoryTree, Footer, Header, DataTable, Log, Button
 
 
 class FileBrowser(App):
@@ -49,6 +49,7 @@ class FileBrowser(App):
         yield Header()
         with Container():
             yield DirectoryOnlyTree(path, id="tree-view")
+            yield Button("Open", id="open")
             with VerticalScroll(id="data-view"):
                 yield DataTable(id="data", cursor_type="row")
             with VerticalScroll(id="log-view"):
@@ -67,9 +68,9 @@ class FileBrowser(App):
     def on_data_table_row_selected(self, event):
         self.selected_row = event.row_key
 
-    def _on_click(self, event):
-        if event.widget == self.query_one(DataTable) and self.selected_row is not None and event.chain == 2:
-            os.startfile(self.data_by_row[self.selected_row].path)
+    def on_button_pressed(self, event):
+        if self.selected_row is not None:
+            os.startfile(self.data_by_key[self.selected_row].path)
 
     def on_directory_tree_directory_selected(
         self, event: DirectoryTree.FileSelected
