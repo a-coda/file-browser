@@ -19,7 +19,7 @@ from rich.traceback import Traceback
 from textual.app import App, ComposeResult
 from textual.containers import Container, VerticalScroll
 from textual.reactive import reactive, var
-from textual.widgets import DirectoryTree, Footer, Header, DataTable
+from textual.widgets import DirectoryTree, Footer, Header, DataTable, Log
 
 
 class FileBrowser(App):
@@ -51,6 +51,8 @@ class FileBrowser(App):
             yield DirectoryOnlyTree(path, id="tree-view")
             with VerticalScroll(id="data-view"):
                 yield DataTable(id="data", cursor_type="row")
+            with VerticalScroll(id="log-view"):
+                yield Log()
         yield Footer()
 
     def on_mount(self) -> None:
@@ -101,7 +103,8 @@ class FileBrowser(App):
                 self.data_by_key[key] = value
             
         except Exception as e:
-            data_view.add_rows([[e, "", ""]])
+            log = self.query_one(Log)
+            log.write_line(str(e))
 
     def action_toggle_tree(self) -> None:
         """Called in response to key binding."""
