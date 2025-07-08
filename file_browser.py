@@ -35,6 +35,8 @@ class FileBrowser(App):
     sort_column = "Name"
     sort_reverse = False
     show_tree = var(True)
+    data_by_key = []
+    selected_row = None
     path: reactive[str | None] = reactive(None)
 
     def watch_show_tree(self, show_tree: bool) -> None:
@@ -48,7 +50,7 @@ class FileBrowser(App):
         with Container():
             yield DirectoryOnlyTree(path, id="tree-view")
             with VerticalScroll(id="data-view"):
-                yield DataTable(id="data")
+                yield DataTable(id="data", cursor_type="row")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -59,6 +61,13 @@ class FileBrowser(App):
             self.watch_path(self.path)
 
         self.theme_changed_signal.subscribe(self, theme_change)
+
+    def on_data_table_row_selected(self, event):
+        self.selected_row = event.row_key
+
+    def _on_click(self, event):
+        if event.widget == self.query_one(DataTable) and self.selected_row is not None and event.chain == 2:
+            os.startfile(self.data_by_row[self.selected_row].path)
 
     def on_directory_tree_directory_selected(
         self, event: DirectoryTree.FileSelected
@@ -85,7 +94,12 @@ class FileBrowser(App):
 
         try:
             data_view.clear()
-            data_view.add_rows([[item.name, human_readable_byte_count_si(item.stat().st_size), datetime.datetime.fromtimestamp(item.stat().st_mtime)] for item in os.scandir(path)])
+            self.data_by_key = {}
+            data_values = list(os.scandir(path))
+            data_keys = data_view.add_rows([[item.name, human_readable_byte_count_si(item.stat().st_size), datetime.datetime.fromtimestamp(item.stat().st_mtime)] for item in data_values])
+            for key, value in zip(data_keys, data_values):
+                self.data_by_key[key] = value
+            
         except Exception as e:
             data_view.add_rows([[e, "", ""]])
 
