@@ -15,11 +15,12 @@ import datetime
 
 from rich.syntax import Syntax
 from rich.traceback import Traceback
+from rich.text import Text
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, VerticalScroll
 from textual.reactive import reactive, var
-from textual.widgets import DirectoryTree, Footer, Header, DataTable, Log, Button
+from textual.widgets import DirectoryTree, Footer, Header, DataTable, RichLog, Button
 
 
 class FileBrowser(App):
@@ -53,7 +54,7 @@ class FileBrowser(App):
             with VerticalScroll(id="data-view"):
                 yield DataTable(id="data", cursor_type="row")
             with VerticalScroll(id="log-view"):
-                yield Log()
+                yield RichLog()
         yield Footer()
 
     def on_mount(self) -> None:
@@ -104,8 +105,10 @@ class FileBrowser(App):
                 self.data_by_key[key] = value
             
         except Exception as e:
-            log = self.query_one(Log)
-            log.write_line(str(e))
+            log = self.query_one(RichLog)
+            text = Text(str(e))
+            text.stylize("red bold")
+            log.write(text)
 
     def action_toggle_tree(self) -> None:
         """Called in response to key binding."""
