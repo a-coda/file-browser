@@ -16,17 +16,20 @@ Screen {
 FileBrowser.-show-tree #tree-view {
     display: block;
     max-width: 50%;
+    border: solid;
 }
-
 
 #data-view {
     overflow: auto scroll;
     min-width: 100%;
     hatch: right $panel;
+    border: solid;
 }
 #log-view {
     max-height: 10%;
+    border: solid;
 }
+
 #data {
     width: auto;
 }

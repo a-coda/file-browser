@@ -37,7 +37,7 @@ class FileBrowser(App):
     sort_reverse = False
     show_tree = var(True)
     data_by_key = []
-    selected_row = None
+    selected_row: reactive[str | None] = reactive(None)
     path: reactive[str | None] = reactive(None)
 
     def watch_show_tree(self, show_tree: bool) -> None:
@@ -50,7 +50,7 @@ class FileBrowser(App):
         yield Header()
         with Container():
             yield DirectoryOnlyTree(path, id="tree-view")
-            yield Button("Open", id="open")
+            yield Button("Open", id="open-button", variant="primary", disabled = True)
             with VerticalScroll(id="data-view"):
                 yield DataTable(id="data", cursor_type="row")
             with VerticalScroll(id="log-view"):
@@ -89,6 +89,7 @@ class FileBrowser(App):
         event.data_table.sort(self.sort_column,
                               key = parse_human_readable_byte_count_si if event.column_index == self.column_names.index("Size") else lambda x: x,
                               reverse = self.sort_reverse)
+        self.selected_row = None
 
     def watch_path(self, path: str | None) -> None:
         """Called when path changes."""
@@ -103,12 +104,17 @@ class FileBrowser(App):
             data_keys = data_view.add_rows([[item.name, human_readable_byte_count_si(item.stat().st_size), datetime.datetime.fromtimestamp(item.stat().st_mtime)] for item in data_values])
             for key, value in zip(data_keys, data_values):
                 self.data_by_key[key] = value
+            self.selected_row = None
             
         except Exception as e:
             log = self.query_one(RichLog)
             text = Text(str(e))
             text.stylize("red bold")
             log.write(text)
+
+    def watch_selected_row(self, selected_row):
+        button = self.query_one(Button)
+        button.disabled = selected_row is None
 
     def action_toggle_tree(self) -> None:
         """Called in response to key binding."""
