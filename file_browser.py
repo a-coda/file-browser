@@ -101,7 +101,7 @@ class FileBrowser(App):
             data_view.clear()
             self.data_by_key = {}
             data_values = list(os.scandir(path))
-            data_keys = data_view.add_rows([[item.name, human_readable_byte_count_si(item.stat().st_size), datetime.datetime.fromtimestamp(item.stat().st_mtime)] for item in data_values])
+            data_keys = data_view.add_rows([[item.name, human_readable_byte_count_si(item.stat().st_size), datetime.datetime.fromtimestamp(item.stat().st_mtime)] for item in data_values if item.is_file()])
             for key, value in zip(data_keys, data_values):
                 self.data_by_key[key] = value
             self.selected_row = None
