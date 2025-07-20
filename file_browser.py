@@ -3,7 +3,7 @@ File browser example.
 
 Run with:
 
-    python file_browser.py PATH
+    python file_browser.py
 """
 
 from __future__ import annotations
